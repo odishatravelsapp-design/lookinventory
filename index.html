@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#16a34a" />
+  <title>Look Inventory</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">🛒</span>
+      <div>
+        <h1 id="shopName">My Shop</h1>
+        <span id="syncStatus" class="sync-status offline">Offline · local only</span>
+      </div>
+    </div>
+    <button id="scanFab" class="scan-fab" title="Scan barcode" aria-label="Scan barcode">📷</button>
+  </header>
+
+  <main id="views">
+    <!-- INVENTORY -->
+    <section id="view-inventory" class="view active">
+      <div class="toolbar">
+        <input id="searchBox" class="search" type="search" data-i18n-ph="search_ph" placeholder="Search…" />
+        <button id="addItemBtn" class="btn primary" data-i18n="add">+ Add</button>
+      </div>
+      <div id="lowStockBanner" class="banner hidden"></div>
+      <div id="expiryBanner" class="banner hidden"></div>
+      <ul id="inventoryList" class="item-list"></ul>
+      <button id="loadMoreBtn" class="btn ghost full hidden" data-i18n="load_more">Load more</button>
+      <p id="inventoryEmpty" class="empty hidden" data-i18n="no_items"></p>
+    </section>
+
+    <!-- BILLING -->
+    <section id="view-bill" class="view">
+      <div class="billtype">
+        <label><input type="radio" name="billType" value="consumer" checked /> <span data-i18n="consumer">Consumer</span></label>
+        <label><input type="radio" name="billType" value="b2b" /> <span data-i18n="b2b">B2B</span></label>
+      </div>
+
+      <div id="partyFields" class="card hidden">
+        <div class="grid2">
+          <label class="field"><span data-i18n="party_name">Party</span><input id="p_name" type="text" /></label>
+          <label class="field"><span data-i18n="phone">Phone</span><input id="p_phone" type="tel" inputmode="numeric" /></label>
+        </div>
+        <label class="field"><span data-i18n="gstin">GSTIN</span><input id="p_gst" type="text" /></label>
+      </div>
+
+      <div class="toolbar">
+        <input id="billSearch" class="search" type="search" data-i18n-ph="bill_search_ph" placeholder="Add item…" />
+        <button id="billVoiceBtn" class="btn ghost" data-flag="voice" title="Voice billing" aria-label="Voice billing">🎤</button>
+        <button id="billScanBtn" class="btn ghost" data-flag="scan" aria-label="Scan barcode">📷</button>
+      </div>
+      <p id="voiceHint" class="muted voice-hint hidden"></p>
+      <div id="favStrip" class="fav-strip" data-flag="favourites"></div>
+      <ul id="billSuggest" class="suggest hidden"></ul>
+
+      <ul id="cartList" class="item-list"></ul>
+      <p id="cartEmpty" class="empty" data-i18n="cart_empty"></p>
+
+      <div id="billSummary" class="card hidden">
+        <div class="srow"><span data-i18n="subtotal">Subtotal</span><b id="sumSubtotal">₹0.00</b></div>
+        <div class="srow"><span data-i18n="discount">Discount</span><input id="billDiscount" type="number" min="0" step="0.01" value="0" /></div>
+        <div class="srow"><span><span data-i18n="tax">Tax</span> <small id="taxLabel">(0%)</small></span><b id="sumTax">₹0.00</b></div>
+        <div class="srow total"><span data-i18n="total">Total</span><b id="sumTotal">₹0.00</b></div>
+        <div class="paymethods">
+          <label><input type="radio" name="payMethod" value="cash" checked /> <span data-i18n="pay_cash">Cash</span></label>
+          <label><input type="radio" name="payMethod" value="upi" /> <span data-i18n="pay_upi_m">UPI</span></label>
+          <label><input type="radio" name="payMethod" value="credit" /> <span data-i18n="pay_credit">Udhaar</span></label>
+          <label data-flag="splitPay"><input type="radio" name="payMethod" value="split" /> <span data-i18n="pay_split">Split</span></label>
+        </div>
+        <div id="splitFields" class="grid2 hidden">
+          <label class="field"><span data-i18n="pay_cash">Cash</span><input id="splitCash" type="number" min="0" step="0.01" value="0" /></label>
+          <label class="field"><span data-i18n="pay_upi_m">UPI</span><input id="splitUpi" type="number" min="0" step="0.01" value="0" /></label>
+        </div>
+        <div id="khataFields" class="grid2 hidden">
+          <label class="field"><span data-i18n="cust_name">Customer name</span><input id="k_name" type="text" /></label>
+          <label class="field"><span data-i18n="phone">Phone</span><input id="k_phone" type="tel" inputmode="numeric" /></label>
+        </div>
+        <div class="row">
+          <button id="clearCartBtn" class="btn ghost" data-i18n="clear">Clear</button>
+          <button id="parkBillBtn" class="btn ghost" data-flag="parkBill" data-i18n="park">Hold</button>
+          <button id="saveQuoteBtn" class="btn ghost" data-flag="quotes" data-i18n="save_quote">Quote</button>
+          <span class="spacer"></span>
+          <button id="checkoutBtn" class="btn primary" data-i18n="generate_bill">Generate bill</button>
+        </div>
+      </div>
+      <div id="parkedBills" class="parked hidden"></div>
+
+      <div class="today-bar">
+        <span><span data-i18n="today">today</span>: <b id="todayTotal2">₹0.00</b></span>
+        <span class="profit-chip">📈 <span data-i18n="profit_today">profit</span> <b id="todayProfit">₹0.00</b></span>
+      </div>
+
+      <details id="salesHistory" class="card">
+        <summary><span data-i18n="sales_history">Sales history</span> — <span data-i18n="today">today</span>: <b id="todayTotal">₹0.00</b></summary>
+        <ul id="salesList" class="sales-list"></ul>
+      </details>
+    </section>
+
+    <!-- TO ORDER -->
+    <section id="view-order" class="view">
+      <div class="toolbar">
+        <h2 data-i18n="order_title">To order from wholesale</h2>
+        <button id="clearFulfilledBtn" class="btn ghost" data-i18n="clear_done">Clear done</button>
+      </div>
+      <button id="sendWholesalerBtn" class="btn primary full" data-i18n="send_wholesaler">Send list to wholesaler</button>
+      <ul id="orderList" class="item-list"></ul>
+      <p id="orderEmpty" class="empty hidden" data-i18n="order_empty"></p>
+    </section>
+
+    <!-- SCAN -->
+    <section id="view-scan" class="view">
+      <div class="scanner-wrap">
+        <video id="scanVideo" playsinline muted></video>
+        <div class="scan-frame"></div>
+      </div>
+      <p id="scanHint" class="scan-hint" data-i18n="scan_hint">Point the camera at a barcode.</p>
+      <div class="scan-actions">
+        <button id="startScanBtn" class="btn primary" data-i18n="start_camera">Start camera</button>
+        <button id="stopScanBtn" class="btn ghost hidden" data-i18n="stop">Stop</button>
+        <button id="manualBarcodeBtn" class="btn ghost" data-i18n="manual_code">Enter code manually</button>
+      </div>
+    </section>
+
+    <!-- MORE / SETTINGS -->
+    <section id="view-settings" class="view">
+      <div id="setupChecklist" class="card checklist"></div>
+
+      <div class="hub">
+        <button id="openKhataBtn" class="hub-btn" data-flag="khata"><span data-i18n="khata_title">Khata</span><b id="hubKhataBal">₹0</b></button>
+        <button id="openReportsBtn" class="hub-btn" data-flag="reports" data-owner><span data-i18n="reports_title">Reports</span><b id="hubToday">₹0</b></button>
+        <button id="openPurchasesBtn" class="hub-btn" data-flag="purchases" data-owner><span data-i18n="purchases_title">Purchases</span><b>📥</b></button>
+        <button id="openDayCloseBtn" class="hub-btn" data-flag="dayclose" data-owner><span data-i18n="dayclose_title">Day close</span><b>🔒</b></button>
+        <button id="openLabelsBtn" class="hub-btn" data-flag="labels"><span data-i18n="labels_title">Labels</span><b>🏷️</b></button>
+        <button id="openReturnsBtn" class="hub-btn" data-flag="returns" data-owner><span data-i18n="returns_title">Returns</span><b>↩️</b></button>
+        <button id="openAdjustBtn" class="hub-btn" data-flag="stockAdjust" data-owner><span data-i18n="adjust_title">Stock adjust</span><b>🛠️</b></button>
+        <button id="openReceivablesBtn" class="hub-btn" data-flag="receivables" data-owner><span data-i18n="receivables_title">Receivables</span><b id="hubReceivable">₹0</b></button>
+        <button id="openQuotesBtn" class="hub-btn" data-flag="quotes"><span data-i18n="quotes_title">Quotations</span><b>📄</b></button>
+        <button id="openExpensesBtn" class="hub-btn" data-flag="expenses" data-owner><span data-i18n="expenses_title">Expenses</span><b>💸</b></button>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="language">🌐 Language</h3>
+        <select id="langSelect" class="lang-select"></select>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="appearance">🎨 Appearance</h3>
+        <label class="switch-row"><span data-i18n="dark_mode">Dark mode</span><input type="checkbox" id="darkToggle" /></label>
+        <label class="switch-row"><span data-i18n="large_text">Large text</span><input type="checkbox" id="largeToggle" /></label>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="security">🔒 App lock (PIN)</h3>
+        <p class="muted" data-i18n="pin_help">Set a 4-digit PIN to open the app. Leave blank to turn off.</p>
+        <div class="row">
+          <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••" class="pin-field" aria-label="Set PIN" />
+          <button id="savePinBtn" class="btn primary" data-i18n="save">Save</button>
+        </div>
+        <button id="cashierModeBtn" class="btn ghost full" data-flag="roles" data-i18n="cashier_mode">👤 Enter cashier mode</button>
+        <p class="muted" data-i18n="cashier_help">Cashier mode hides Reports, Purchases and settings. PIN needed to exit.</p>
+      </div>
+
+      <div class="card" data-owner>
+        <h3 data-i18n="shop_details">🏪 Shop details</h3>
+        <label class="field"><span data-i18n="shop_name">Shop name</span><input id="shopNameInput" type="text" /></label>
+        <div class="grid2">
+          <label class="field"><span data-i18n="phone">Phone</span><input id="shopPhoneInput" type="tel" inputmode="numeric" /></label>
+          <label class="field"><span data-i18n="tax_rate">Tax %</span><input id="taxRateInput" type="number" min="0" step="0.1" value="0" /></label>
+        </div>
+        <label class="field"><span data-i18n="address">Address</span><input id="shopAddressInput" type="text" /></label>
+        <label class="field"><span>Shop GSTIN</span><input id="shopGstInput" type="text" /></label>
+        <label class="field"><span data-i18n="credit_terms">Credit terms (days, for B2B/Udhaar)</span><input id="creditTermsInput" type="number" min="0" step="1" value="0" /></label>
+        <label class="field"><span data-i18n="upi_id">UPI ID</span><input id="shopUpiInput" type="text" placeholder="name@bank" /></label>
+        <label class="field"><span data-i18n="upi_qr">Your UPI QR image</span>
+          <input id="upiQrInput" type="file" accept="image/*" />
+          <img id="upiQrPreview" class="qr-preview hidden" alt="UPI QR" />
+        </label>
+      </div>
+
+      <div class="card" data-owner>
+        <h3 data-i18n="gdrive">☁️ Google Drive backup</h3>
+        <p class="muted">Sign in with the shop's Gmail to back up online. Works only when online; the app keeps working offline either way.</p>
+        <label id="clientIdField" class="field"><span>Google Client ID</span>
+          <input id="gClientId" type="text" placeholder="xxxx.apps.googleusercontent.com" />
+          <small class="muted">One-time setup. See README.</small>
+        </label>
+        <div class="row">
+          <button id="gSignInBtn" class="btn" data-i18n="signin">Sign in</button>
+          <button id="gBackupBtn" class="btn primary" data-i18n="backup_now" disabled>Back up now</button>
+          <button id="gRestoreBtn" class="btn" data-i18n="restore" disabled>Restore</button>
+        </div>
+        <span id="gStatus" class="muted"></span>
+      </div>
+
+      <div class="card" data-owner>
+        <h3 data-i18n="firebase">🔥 Live multi-device sync (Firebase)</h3>
+        <p class="muted" data-i18n="firebase_help">Optional. Syncs two phones live (owner + helper) when online, queues changes offline. Free tier. Paste your Firebase config + a shared shop code. See README.</p>
+        <label class="field"><span>Firebase config (JSON)</span><textarea id="fbConfig" rows="3" placeholder='{"apiKey":"...","projectId":"..."}'></textarea></label>
+        <label class="field"><span data-i18n="shop_code">Shop code (same on all phones)</span><input id="fbShopCode" type="text" placeholder="e.g. dillip-shop-123" /></label>
+        <div class="row">
+          <button id="fbConnectBtn" class="btn primary" data-i18n="connect">Connect &amp; sync</button>
+        </div>
+        <span id="fbStatus" class="muted"></span>
+      </div>
+
+      <div class="card" data-owner>
+        <h3 data-i18n="file_backup">📁 File backup (no account needed)</h3>
+        <p id="storageNote" class="muted"></p>
+        <div class="row">
+          <button id="exportBtn" class="btn" data-i18n="export">Export backup file</button>
+          <button id="importBtn" class="btn" data-i18n="import">Import backup file</button>
+          <input id="importInput" type="file" accept="application/json" hidden />
+        </div>
+      </div>
+
+      <details class="card" data-owner>
+        <summary data-i18n="features_title">🎛️ Features (turn on/off)</summary>
+        <div id="featuresList" class="features-list"></div>
+      </details>
+
+      <div class="card">
+        <h3 data-i18n="about_title">ℹ️ About &amp; privacy</h3>
+        <button id="privacyBtn" class="btn ghost full" data-i18n="privacy_btn">Privacy &amp; terms</button>
+        <p class="muted">Your data stays on your phone. Nothing is sent anywhere unless you turn on Google/Firebase backup.</p>
+      </div>
+
+      <button id="shareAppBtn" class="btn full" data-i18n="share_app">📲 Share this app</button>
+      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v9</span></p>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-view="inventory"><span>📦</span><i data-i18n="tab_stock">Stock</i></button>
+    <button class="tab" data-view="bill" data-flag="billing"><span>🧾</span><i data-i18n="tab_bill">Bill</i></button>
+    <button class="tab" data-view="order" data-flag="reorder"><span>📝</span><i data-i18n="tab_order">To Order</i></button>
+    <button class="tab" data-view="scan" data-flag="scan"><span>📷</span><i data-i18n="tab_scan">Scan</i></button>
+    <button class="tab" data-view="settings"><span>⚙️</span><i data-i18n="tab_more">More</i></button>
+  </nav>
+
+  <!-- Item editor dialog -->
+  <dialog id="itemDialog">
+    <form id="itemForm" method="dialog">
+      <h3 id="itemDialogTitle">Add item</h3>
+      <input type="hidden" id="f_id" />
+      <label class="field"><span data-i18n="name_req">Name *</span>
+        <span class="barcode-row">
+          <input id="f_name" type="text" required />
+          <button type="button" id="f_voiceBtn" class="btn ghost small" title="Speak">🎤</button>
+        </span>
+      </label>
+      <label class="field"><span>Barcode</span>
+        <span class="barcode-row">
+          <input id="f_barcode" type="text" inputmode="numeric" />
+          <button type="button" id="f_scanBtn" class="btn ghost small">Scan</button>
+          <button type="button" id="f_genBtn" class="btn ghost small" data-i18n="gen_code">Generate</button>
+        </span>
+      </label>
+      <label class="field photo-field"><span data-i18n="photo">Photo</span>
+        <span class="barcode-row">
+          <input id="f_photoInput" type="file" accept="image/*" capture="environment" />
+          <img id="f_photoPreview" class="photo-preview hidden" alt="" />
+        </span>
+      </label>
+      <label class="field"><span data-i18n="description">Description</span><textarea id="f_desc" rows="2"></textarea></label>
+      <div class="grid2">
+        <label class="field"><span data-i18n="sell_price">Sell price (₹)</span><input id="f_price" type="number" min="0" step="0.01" /></label>
+        <label class="field"><span data-i18n="cost_price">Cost price (₹)</span><input id="f_cost" type="number" min="0" step="0.01" /></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span data-i18n="quantity">Quantity</span><input id="f_qty" type="number" min="0" step="1" value="0" /></label>
+        <label class="field"><span data-i18n="unit">Unit</span>
+          <select id="f_unit">
+            <option value="pcs">pcs</option><option value="kg">kg</option><option value="g">g</option>
+            <option value="L">L</option><option value="ml">ml</option><option value="pkt">pkt</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span data-i18n="category">Category</span><input id="f_category" type="text" /></label>
+        <label class="field"><span data-i18n="reorder_at">Reorder at qty</span><input id="f_reorder" type="number" min="0" step="1" value="5" /></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span data-i18n="expiry">Expiry date</span><input id="f_expiry" type="date" /></label>
+        <label class="field"><span data-i18n="pack_size">Units per pack/box</span><input id="f_pack" type="number" min="1" step="1" value="1" /></label>
+      </div>
+      <div class="grid2" data-flag="gst">
+        <label class="field"><span data-i18n="hsn">HSN/SAC code</span><input id="f_hsn" type="text" inputmode="numeric" /></label>
+        <label class="field"><span data-i18n="gst_rate">GST %</span><input id="f_gst" type="number" min="0" step="0.1" placeholder="default" /></label>
+      </div>
+      <div class="grid2" data-flag="wholesale">
+        <label class="field"><span data-i18n="wholesale_price">Wholesale price (₹)</span><input id="f_wprice" type="number" min="0" step="0.01" /></label>
+        <label class="field"><span data-i18n="wholesale_min">Wholesale min qty</span><input id="f_wmin" type="number" min="0" step="1" /></label>
+      </div>
+      <label class="switch-row" data-flag="favourites"><span data-i18n="favourite">⭐ Quick-sell favourite</span><input type="checkbox" id="f_fav" /></label>
+      <div class="dialog-actions">
+        <button type="button" id="deleteItemBtn" class="btn danger hidden" data-i18n="delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" id="cancelItemBtn" class="btn ghost" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn primary" data-i18n="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Item details / sell dialog -->
+  <dialog id="detailDialog"><div id="detailContent"></div></dialog>
+
+  <!-- Receipt dialog -->
+  <dialog id="receiptDialog">
+    <div id="receiptArea" class="receipt"></div>
+    <div id="payUpiWrap" class="pay-upi hidden"><a id="payUpiLink" class="btn primary full" href="#" data-i18n="pay_upi">Pay via UPI</a></div>
+    <div class="dialog-actions no-print">
+      <button id="receiptCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+      <span class="spacer"></span>
+      <button id="receiptChallanBtn" class="btn" data-flag="challan" data-i18n="challan">Challan</button>
+      <button id="receiptBtBtn" class="btn" title="Bluetooth printer">🖨️ BT</button>
+      <button id="receiptImgBtn" class="btn" data-i18n="share_image">Share image</button>
+      <button id="receiptShareBtn" class="btn" data-i18n="share">Share</button>
+      <button id="receiptPrintBtn" class="btn primary" data-i18n="print_save">Print</button>
+    </div>
+  </dialog>
+
+  <!-- Khata dialog -->
+  <dialog id="khataDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="khata_title">Khata</h3>
+      <button id="khataCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <button id="addKhataBtn" class="btn primary full">+ Customer / entry</button>
+    <ul id="khataList" class="khata-list"></ul>
+  </dialog>
+
+  <!-- Reports dialog -->
+  <dialog id="reportsDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="reports_title">Reports</h3>
+      <button id="reportsCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div class="row">
+      <input id="reportMonth" type="month" />
+      <button id="exportSalesBtn" class="btn small" data-i18n="export_csv">Export CSV</button>
+      <button id="exportGstrBtn" class="btn small" data-flag="gst">GSTR CSV</button>
+    </div>
+    <div id="reportsContent"></div>
+  </dialog>
+
+  <!-- Purchases dialog -->
+  <dialog id="purchasesDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="purchases_title">Purchases</h3>
+      <button id="purchasesCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div class="card">
+      <label class="field"><span data-i18n="party_name">Supplier</span><input id="pu_supplier" type="text" /></label>
+      <div class="toolbar">
+        <input id="puSearch" class="search" type="search" data-i18n-ph="bill_search_ph" placeholder="Add item…" />
+      </div>
+      <ul id="puSuggest" class="suggest hidden"></ul>
+      <ul id="puList" class="item-list"></ul>
+      <div class="srow total"><span data-i18n="total">Total</span><b id="puTotal">₹0.00</b></div>
+      <label class="khata-toggle"><input type="checkbox" id="puUnpaid" /> <span data-i18n="supplier_unpaid">Unpaid (I owe supplier)</span></label>
+      <button id="savePurchaseBtn" class="btn primary full" data-i18n="save_purchase">Save purchase (add to stock)</button>
+    </div>
+    <h4 data-i18n="supplier_balances">Supplier balances</h4>
+    <ul id="supplierList" class="khata-list"></ul>
+  </dialog>
+
+  <!-- Day-close dialog -->
+  <dialog id="dayCloseDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="dayclose_title">Day close</h3>
+      <button id="dayCloseCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div id="dayCloseContent"></div>
+    <h4 data-i18n="change_calc">Change calculator</h4>
+    <div class="change-calc">
+      <label class="field"><span data-i18n="amount_received">Received ₹</span><input id="cashReceived" type="number" min="0" /></label>
+      <div class="srow total"><span data-i18n="change_due">Change due</span><b id="changeDue">₹0.00</b></div>
+    </div>
+  </dialog>
+
+  <!-- Labels dialog -->
+  <dialog id="labelsDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="labels_title">Print barcode labels</h3>
+      <button id="labelsCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <p class="muted" data-i18n="labels_help">Select items, then print a sheet of stick-on barcode labels.</p>
+    <ul id="labelsList" class="label-pick"></ul>
+    <button id="printLabelsBtn" class="btn primary full" data-i18n="print_labels">Print selected labels</button>
+  </dialog>
+
+  <!-- First-run setup wizard -->
+  <div id="onboard" class="onboard hidden">
+    <div class="onboard-card">
+      <div class="ob-progress"><span></span><span></span><span></span><span></span><span></span></div>
+
+      <div class="onboard-step" data-step="1">
+        <div class="logo-big">🛒</div>
+        <h2>Welcome · स्वागत · ସ୍ୱାଗତ</h2>
+        <p class="muted">Choose your language</p>
+        <select id="obLang" class="lang-select"></select>
+        <button class="btn primary full ob-next">Next →</button>
+      </div>
+
+      <div class="onboard-step hidden" data-step="2">
+        <h2 data-i18n="shop_details">🏪 Shop details</h2>
+        <label class="field"><span data-i18n="shop_name">Shop name</span><input id="obName" type="text" placeholder="My Shop" /></label>
+        <label class="field"><span data-i18n="phone">Phone</span><input id="obPhone" type="tel" inputmode="numeric" /></label>
+        <label class="field"><span data-i18n="address">Address</span><input id="obAddr" type="text" /></label>
+        <div class="ob-actions"><button class="btn ghost ob-back">← Back</button><button class="btn primary ob-next">Next →</button></div>
+      </div>
+
+      <div class="onboard-step hidden" data-step="3">
+        <h2>💳 Payments (UPI)</h2>
+        <p class="muted">Optional — prints on every receipt so customers can pay you instantly.</p>
+        <label class="field"><span data-i18n="upi_id">UPI ID</span><input id="obUpi" type="text" placeholder="name@bank" /></label>
+        <label class="field"><span data-i18n="upi_qr">UPI QR image</span><input id="obUpiQr" type="file" accept="image/*" /></label>
+        <div class="ob-actions"><button class="btn ghost ob-back">← Back</button><button class="btn primary ob-next">Next →</button></div>
+      </div>
+
+      <div class="onboard-step hidden" data-step="4">
+        <h2>☁️ Back up & sync</h2>
+        <p class="muted">Sign in once with Google so your data is safe and follows you to any phone. Optional but recommended.</p>
+        <button id="obGoogle" class="btn primary full">🔐 Sign in with Google</button>
+        <span id="obGoogleStatus" class="muted"></span>
+        <div class="ob-actions"><button class="btn ghost ob-back">← Back</button><button class="btn primary ob-next">Next →</button></div>
+      </div>
+
+      <div class="onboard-step hidden" data-step="5">
+        <h2>✅ All set</h2>
+        <label class="switch-row"><span>Remove sample items</span><input type="checkbox" id="obClear" checked /></label>
+        <p class="muted">💡 Open <b>More</b> anytime for a PIN lock, live two-phone sync, and language.</p>
+        <button id="obInstall" class="btn full hidden">📲 Install app on this phone</button>
+        <div class="ob-actions"><button class="btn ghost ob-back">← Back</button><button class="btn primary ob-finish" data-i18n="start_using">Start using ✓</button></div>
+      </div>
+
+      <button id="obSkip" class="ob-skip">Skip setup</button>
+    </div>
+  </div>
+
+  <!-- Receivables / aging dialog -->
+  <dialog id="receivablesDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="receivables_title">Receivables</h3>
+      <button id="receivablesCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div id="receivablesContent"></div>
+  </dialog>
+
+  <!-- Quotations dialog -->
+  <dialog id="quotesDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="quotes_title">Quotations</h3>
+      <button id="quotesCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <p class="muted" data-i18n="quotes_help">Save a cart as a quote from the Bill tab, then convert it to an invoice here.</p>
+    <ul id="quotesList" class="sales-list"></ul>
+  </dialog>
+
+  <!-- Expenses dialog -->
+  <dialog id="expensesDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="expenses_title">Expenses</h3>
+      <button id="expensesCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div class="grid2">
+      <label class="field"><span data-i18n="amount">Amount ₹</span><input id="expAmount" type="number" min="0" step="0.01" /></label>
+      <label class="field"><span data-i18n="adjust_reason">Category</span>
+        <select id="expCategory">
+          <option value="rent">Rent</option><option value="electricity">Electricity</option>
+          <option value="salary">Salary</option><option value="transport">Transport</option>
+          <option value="misc">Misc</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><span data-i18n="note">Note</span><input id="expNote" type="text" /></label>
+    <button id="saveExpenseBtn" class="btn primary full" data-i18n="save">Save</button>
+    <h4 data-i18n="expenses_recent">Recent expenses</h4>
+    <ul id="expensesList" class="sales-list"></ul>
+  </dialog>
+
+  <!-- Record-payment dialog -->
+  <dialog id="payDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="record_payment">Record payment</h3>
+      <button id="payCancelBtn" class="btn ghost" data-i18n="cancel">Cancel</button>
+    </div>
+    <p id="payInfo" class="muted"></p>
+    <label class="field"><span data-i18n="amount">Amount ₹</span><input id="payAmount" type="number" min="0" step="0.01" /></label>
+    <button id="payConfirmBtn" class="btn primary full" data-i18n="save">Save payment</button>
+  </dialog>
+
+  <!-- PIN lock overlay -->
+  <div id="lockScreen" class="lock-screen hidden">
+    <div class="lock-box">
+      <div class="logo-big">🛒</div>
+      <h2 data-i18n="enter_pin">Enter PIN</h2>
+      <input id="lockPin" type="password" inputmode="numeric" maxlength="6" class="pin-field big" />
+      <p id="lockError" class="lock-error"></p>
+    </div>
+  </div>
+
+  <!-- Update-available banner -->
+  <div id="updateBanner" class="update-banner hidden">
+    <span data-i18n="update_ready">New version ready.</span>
+    <button id="updateBtn" class="btn small" data-i18n="refresh">Refresh</button>
+  </div>
+
+  <!-- Privacy / terms dialog -->
+  <dialog id="privacyDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="privacy_btn">Privacy &amp; terms</h3>
+      <button id="privacyCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div class="privacy-body">
+      <p><b>Your data is yours.</b> Everything you enter (items, sales, customers) is stored only on this device.</p>
+      <p>If you turn on Google Drive backup or Firebase live sync, a copy is sent to <i>your own</i> Google/Firebase account so you can restore or sync devices. We do not run any server and cannot see your data.</p>
+      <p>Customer phone numbers you save are used only for WhatsApp reminders you choose to send.</p>
+      <p>The app needs camera permission only for barcode scanning, and microphone only for voice billing — both optional.</p>
+      <p class="muted">Provided as-is, with no warranty. You are responsible for your records and any tax obligations.</p>
+    </div>
+  </dialog>
+
+  <!-- Returns / refund dialog -->
+  <dialog id="returnsDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="returns_title">Returns / refund</h3>
+      <button id="returnsCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <input id="returnSearch" class="search" type="search" placeholder="Find bill # or customer…" />
+    <ul id="returnsList" class="sales-list"></ul>
+  </dialog>
+
+  <!-- Stock adjustment dialog -->
+  <dialog id="adjustDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="adjust_title">Stock adjustment</h3>
+      <button id="adjustCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <input id="adjustSearch" class="search" type="search" data-i18n-ph="bill_search_ph" placeholder="Find item…" />
+    <ul id="adjustSuggest" class="suggest hidden"></ul>
+    <div id="adjustForm" class="hidden">
+      <p>Item: <b id="adjustName"></b> (now <span id="adjustCur"></span>)</p>
+      <div class="grid2">
+        <label class="field"><span data-i18n="adjust_change">Change (+/−)</span><input id="adjustQty" type="number" step="0.001" /></label>
+        <label class="field"><span data-i18n="adjust_reason">Reason</span>
+          <select id="adjustReason">
+            <option value="damage">Damage</option><option value="theft">Theft</option>
+            <option value="expiry">Expired</option><option value="count">Recount</option><option value="other">Other</option>
+          </select>
+        </label>
+      </div>
+      <button id="adjustSaveBtn" class="btn primary full" data-i18n="save">Save</button>
+    </div>
+    <h4 data-i18n="adjust_log">Recent adjustments</h4>
+    <ul id="adjustLog" class="sales-list"></ul>
+  </dialog>
+
+  <button id="cashierExit" class="cashier-exit hidden" data-i18n="cashier_exit">👤 Cashier · tap to exit</button>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/flags.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/scanner.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/btprint.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/cloud.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

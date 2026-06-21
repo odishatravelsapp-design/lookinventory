@@ -1,0 +1,14 @@
+{
+  "name": "Look Inventory",
+  "short_name": "Inventory",
+  "description": "Offline inventory & reorder manager for small rural shops",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

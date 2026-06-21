@@ -1,0 +1,27 @@
+// Firestore security rules for Look Inventory live-sync.
+// Deploy: Firebase console → Firestore Database → Rules → paste → Publish.
+//
+// The default "test mode" leaves your database open to the world. These rules
+// lock writes to documents under shops/ and require knowing the shop code.
+// For real protection, add Firebase Auth and check request.auth.uid.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each shop is one document: shops/<shopCode>.
+    match /shops/{shopCode} {
+      // OPTION A (simple): anyone with the shop code can read/write that doc only.
+      // Use a long, unguessable shop code (e.g. "dillip-shop-9f3k2a").
+      allow read, write: if shopCode.size() >= 8;
+
+      // OPTION B (recommended): require sign-in and bind the doc to the user.
+      // allow read, write: if request.auth != null && request.auth.uid == shopCode;
+    }
+
+    // Deny everything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
