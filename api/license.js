@@ -1,6 +1,7 @@
 // POST /api/license  { deviceId, shop }  ->  { token }
 // Issues a signed token (48h offline lease) for a device that has an active plan.
-const { issueToken, readStore, loadPrivateKey } = require('../server/lib/license');
+const { issueToken, loadPrivateKey } = require('../server/lib/license');
+const { getStore } = require('../server/lib/store');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,7 +13,7 @@ module.exports = async (req, res) => {
   const { deviceId, shop } = body;
   if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
 
-  const rec = readStore()[deviceId];
+  const rec = (await getStore())[deviceId];
   const now = Date.now();
   if (!rec || rec.revoked || (rec.expiresAt && now > rec.expiresAt)) {
     return res.status(402).json({ error: 'no active license' });   // client stays in trial/paywall

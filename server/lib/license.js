@@ -28,19 +28,10 @@ async function issueToken(privJwk, { deviceId, shop, plan }, leaseHours) {
   return sign(payload, privJwk);
 }
 
-// --- Minimal file store (swap for Firestore / KV / Postgres in production) ---
-const DATA = path.join(__dirname, '..', 'data', 'licenses.json');
-function readStore() {
-  try { return JSON.parse(fs.readFileSync(DATA, 'utf8')); } catch (e) { return {}; }
-}
-function writeStore(s) {
-  fs.mkdirSync(path.dirname(DATA), { recursive: true });
-  fs.writeFileSync(DATA, JSON.stringify(s, null, 2));
-}
 function loadPrivateKey() {
   // Prefer an env var (set LICENSE_PRIVATE_JWK on Vercel) so the key is never committed.
   if (process.env.LICENSE_PRIVATE_JWK) return JSON.parse(process.env.LICENSE_PRIVATE_JWK);
   return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'keys', 'private.jwk.json'), 'utf8'));
 }
 
-module.exports = { sign, issueToken, readStore, writeStore, loadPrivateKey };
+module.exports = { sign, issueToken, loadPrivateKey };

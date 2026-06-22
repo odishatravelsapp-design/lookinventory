@@ -35,11 +35,14 @@
    - `subscribeUrl:` your Razorpay/UPI payment link
    - `leaseHours: 168`  ← **recommend 7 days, not 48**, so spotty rural internet doesn't lock shops out
    - `trialDays: 14` (or your choice)
-3. **Set Vercel env vars** (Project → Settings → Environment Variables):
+3. **Add a free KV database** (production store is already wired — just connect one):
+   - **Easiest:** Vercel dashboard → Storage → create **KV** (Upstash) → it auto-injects `KV_REST_API_URL` + `KV_REST_API_TOKEN`. Nothing else to do.
+   - **Or** create a free **Upstash Redis** DB and set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`.
+   - With neither set, it falls back to a local file (dev only — not durable on serverless).
+4. **Set the other Vercel env vars** (Project → Settings → Environment Variables):
    - `LICENSE_PRIVATE_JWK` = contents of `server/keys/private.jwk.json`
    - `ADMIN_KEY` = a long secret (for the admin dashboard)
    - `LEASE_HOURS` = 168
-4. **Swap the store for a real DB.** `server/lib/license.js` uses a file store that does **not** persist on Vercel. Replace `readStore/writeStore` with **Vercel KV**, **Firestore**, or **Supabase** (all have free tiers).
 5. **Redeploy.** Open `admin/index.html` locally → set API base URL + admin key → add a paying shopkeeper's **Device ID** (they read it from More → About) with a plan + expiry. They unlock on next online check.
 
 ---

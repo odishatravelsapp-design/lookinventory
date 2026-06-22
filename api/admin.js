@@ -2,7 +2,7 @@
 //   GET                      -> { devices }
 //   POST { action, deviceId, tier, expiresAt, shop, message }
 //        action: setPlan | revoke | unrevoke | delete
-const { readStore, writeStore } = require('../server/lib/license');
+const { getStore, putStore } = require('../server/lib/store');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) {
     return res.status(401).json({ error: 'unauthorized' });
   }
-  const store = readStore();
+  const store = await getStore();
   if (req.method === 'GET') return res.json({ devices: store });
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
@@ -33,6 +33,6 @@ module.exports = async (req, res) => {
   } else {
     return res.status(400).json({ error: 'unknown action' });
   }
-  writeStore(store);
+  await putStore(store);
   res.json({ ok: true, devices: store });
 };
