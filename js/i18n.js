@@ -52,7 +52,9 @@ const I18N = (() => {
       credit_terms: 'Credit terms (days, for B2B/Udhaar)', amount: 'Amount ₹', note: 'Note', record_payment: 'Record payment',
       item_no: 'Item number (SKU)', barcode: 'Barcode', help_title: '📖 How to use', help_btn: '📖 How to use this app', tour_show: '📖 Show me how',
       revoked_title: 'Access disabled', sub_needed: 'Subscription needed', subscribe: 'Subscribe', paid_retry: "I've paid · Retry",
-      gen_missing: '⚙️ Generate codes for items without one', select_all: 'Select all'
+      gen_missing: '⚙️ Generate codes for items without one', select_all: 'Select all',
+      data_title: '🗑️ Data', delete_all_items: 'Delete all items', reset_all: 'Reset everything (fresh start)',
+      data_help: '"Delete all items" clears your product list only. "Reset" wipes everything — use before handing a clean app to a new shop.'
     },
     hi: {
       tab_stock: 'स्टॉक', tab_bill: 'बिल', tab_order: 'ऑर्डर', tab_scan: 'स्कैन', tab_more: 'और',

@@ -1,5 +1,5 @@
 // Service worker: makes the app work fully offline by caching the app shell.
-const CACHE = 'look-inventory-v13';
+const CACHE = 'look-inventory-v14';
 const ASSETS = [
   './',
   './index.html',

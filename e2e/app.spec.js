@@ -148,6 +148,17 @@ test('item number (SKU) is saved and searchable', async ({ page }) => {
   await expect(rows.first()).toContainText('Basmati Rice 5kg');
 });
 
+test('delete all items clears the stock list', async ({ page }) => {
+  await expect(page.locator('#inventoryList .item')).toHaveCount(3);   // seeded samples
+  page.on('dialog', (d) => d.accept());                                // confirm()
+  await page.click('.tab[data-view="settings"]');
+  await page.click('#deleteAllItemsBtn');
+  await expect(page.locator('#toast')).toContainText('deleted');
+  await page.click('.tab[data-view="inventory"]');
+  await expect(page.locator('#inventoryList .item')).toHaveCount(0);
+  await expect(page.locator('#inventoryEmpty')).toBeVisible();
+});
+
 test('bulk barcode: generate codes for items without one', async ({ page }) => {
   // add an item with no barcode
   await page.click('#addItemBtn');

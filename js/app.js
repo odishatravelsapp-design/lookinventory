@@ -1079,6 +1079,26 @@
     catch (_) { toast(APP_URL); }
   });
 
+  // ---------- Data management ----------
+  $('#deleteAllItemsBtn').addEventListener('click', async () => {
+    const n = items.length;
+    if (!n) return toast('No items to delete');
+    if (!confirm('Delete ALL ' + n + ' items? Sales history is kept. This cannot be undone.')) return;
+    await DB.bulkReplace([]);                 // clear the items store
+    await DB.setMeta('seeded', true);         // don't re-add samples
+    await reload();
+    scheduleBackup();
+    toast('All items deleted');
+  });
+
+  $('#resetAllBtn').addEventListener('click', async () => {
+    if (!confirm('RESET everything? This wipes items, sales, khata and settings for a fresh start. Cannot be undone.')) return;
+    if (!confirm('Are you sure? The shopkeeper will start from the setup wizard.')) return;
+    try { Cloud.disconnect && Cloud.disconnect(); } catch (_) {}
+    indexedDB.deleteDatabase('look-inventory');
+    location.reload();
+  });
+
   // ---------- Backup payload ----------
   async function buildPayload() {
     return {
@@ -2307,6 +2327,10 @@
 
   // ---------- Seed sample data on first run ----------
   async function seedIfEmpty() {
+    // Only seed sample items on a brand-new install — never re-add them after a
+    // manual "Delete all" / reset (so a clean shop stays clean).
+    if (await DB.getMeta('seeded', false)) return;
+    await DB.setMeta('seeded', true);
     const existing = await DB.allItems();
     if (existing.length) return;
     const samples = [
