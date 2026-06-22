@@ -1079,6 +1079,92 @@
     catch (_) { toast(APP_URL); }
   });
 
+  // ---------- Catalogue: CSV import / export ----------
+  const CSV_COLS = ['name', 'sku', 'barcode', 'price', 'cost', 'quantity', 'unit', 'category', 'reorder', 'hsn', 'gst', 'wprice', 'wmin', 'expiry'];
+
+  function parseCSV(text) {
+    const rows = []; let row = [], cur = '', q = false;
+    text = text.replace(/^﻿/, '');   // strip BOM
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else if (c !== '\r') cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter((r) => r.some((x) => x.trim() !== ''));
+  }
+
+  function csvCell(v) { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+  async function importItemsCSV(text) {
+    const rows = parseCSV(text);
+    if (rows.length < 2) throw new Error('CSV looks empty');
+    const head = rows[0].map((h) => h.trim().toLowerCase());
+    const idx = {}; CSV_COLS.forEach((c) => { idx[c] = head.indexOf(c); });
+    if (idx.name < 0) throw new Error('CSV needs a "name" column');
+    let created = 0, updated = 0;
+    const all = await DB.allItems();
+    const byBc = new Map(all.filter((x) => x.barcode).map((x) => [String(x.barcode), x]));
+    const bySku = new Map(all.filter((x) => x.sku).map((x) => [String(x.sku).toLowerCase(), x]));
+    const byName = new Map(all.map((x) => [x.name.toLowerCase(), x]));
+    const get = (r, k) => (idx[k] >= 0 ? (r[idx[k]] || '').trim() : '');
+    const num = (v) => (v === '' ? undefined : Number(v) || 0);
+
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const name = get(r, 'name'); if (!name) continue;
+      const bc = get(r, 'barcode'), sku = get(r, 'sku');
+      let it = (bc && byBc.get(bc)) || (sku && bySku.get(sku.toLowerCase())) || byName.get(name.toLowerCase()) || null;
+      const fields = {
+        name, sku, barcode: bc,
+        price: num(get(r, 'price')) ?? 0, cost: num(get(r, 'cost')) ?? 0,
+        quantity: num(get(r, 'quantity')) ?? 0, unit: get(r, 'unit') || 'pcs',
+        category: get(r, 'category'), reorder: num(get(r, 'reorder')) ?? 0,
+        hsn: get(r, 'hsn'), gst: get(r, 'gst') === '' ? null : num(get(r, 'gst')),
+        wprice: num(get(r, 'wprice')) ?? 0, wmin: num(get(r, 'wmin')) ?? 0, expiry: get(r, 'expiry')
+      };
+      if (it) { Object.assign(it, fields); await DB.saveItem(it); updated++; }
+      else { await DB.saveItem(fields); created++; }
+    }
+    await DB.setMeta('seeded', true);
+    return { created, updated };
+  }
+
+  $('#importItemsBtn').addEventListener('click', () => $('#importItemsInput').click());
+  $('#importItemsInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const { created, updated } = await importItemsCSV(await file.text());
+      await reload(); scheduleBackup();
+      toast('Imported: ' + created + ' new, ' + updated + ' updated');
+    } catch (err) { toast('Import failed: ' + err.message); }
+    e.target.value = '';
+  });
+
+  function downloadCSV(filename, text) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+    a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+  }
+  $('#exportItemsBtn').addEventListener('click', () => {
+    const lines = [CSV_COLS.join(',')];
+    items.forEach((it) => lines.push(CSV_COLS.map((c) => csvCell(it[c] != null ? it[c] : '')).join(',')));
+    downloadCSV('items.csv', lines.join('\n'));
+    toast('Items exported');
+  });
+  $('#templateBtn').addEventListener('click', () => {
+    downloadCSV('items-template.csv', CSV_COLS.join(',') + '\nParle-G Biscuit,SKU-0001,8901719101234,10,8,24,pkt,Snacks,6,,,,,\nLoose Rice,RICE01,,55,48,100,kg,Grocery,10,,,50,10,');
+    toast('Template downloaded');
+  });
+
+  // ---------- Install app (PWA) ----------
+  $('#installAppBtn').addEventListener('click', doInstall);
+
   // ---------- Data management ----------
   $('#deleteAllItemsBtn').addEventListener('click', async () => {
     const n = items.length;
@@ -2093,6 +2179,11 @@
     e.preventDefault();
     deferredInstall = e;
     $('#obInstall').classList.remove('hidden');
+    $('#installAppBtn').classList.remove('hidden');   // persistent button in More
+  });
+  window.addEventListener('appinstalled', () => {
+    $('#obInstall').classList.add('hidden');
+    $('#installAppBtn').classList.add('hidden');
   });
   async function doInstall() {
     if (!deferredInstall) { toast('Use browser menu → "Add to Home screen"'); return; }

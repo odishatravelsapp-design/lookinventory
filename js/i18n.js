@@ -54,7 +54,9 @@ const I18N = (() => {
       revoked_title: 'Access disabled', sub_needed: 'Subscription needed', subscribe: 'Subscribe', paid_retry: "I've paid · Retry",
       gen_missing: '⚙️ Generate codes for items without one', select_all: 'Select all',
       data_title: '🗑️ Data', delete_all_items: 'Delete all items', reset_all: 'Reset everything (fresh start)',
-      data_help: '"Delete all items" clears your product list only. "Reset" wipes everything — use before handing a clean app to a new shop.'
+      data_help: '"Delete all items" clears your product list only. "Reset" wipes everything — use before handing a clean app to a new shop.',
+      catalogue_title: '📋 Catalogue (CSV / Excel)', catalogue_help: 'Load your whole product list at once. In Excel, "Save As → CSV". Items match by barcode, then item number, then name.',
+      import_items: 'Import items (CSV)', export_items: 'Export items (CSV)', csv_template: 'Template', install_app: '📲 Install app on this phone'
     },
     hi: {
       tab_stock: 'स्टॉक', tab_bill: 'बिल', tab_order: 'ऑर्डर', tab_scan: 'स्कैन', tab_more: 'और',

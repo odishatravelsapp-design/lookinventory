@@ -148,6 +148,21 @@ test('item number (SKU) is saved and searchable', async ({ page }) => {
   await expect(rows.first()).toContainText('Basmati Rice 5kg');
 });
 
+test('CSV import adds and updates items', async ({ page }) => {
+  await page.click('.tab[data-view="settings"]');
+  const csv = 'name,sku,barcode,price,cost,quantity,unit,category\n' +
+    'Basmati Rice 5kg,RICE5,,450,400,8,kg,Grocery\n' +
+    'Tata Salt 1kg,,8901030865278,30,24,20,pkt,Grocery\n';   // existing barcode → update
+  await page.setInputFiles('#importItemsInput', { name: 'items.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await expect(page.locator('#toast')).toContainText('Imported');
+  await page.click('.tab[data-view="inventory"]');
+  await page.fill('#searchBox', 'Basmati');
+  await expect(page.locator('#inventoryList .item')).toHaveCount(1);
+  // existing Tata Salt got updated, not duplicated
+  await page.fill('#searchBox', 'Tata Salt');
+  await expect(page.locator('#inventoryList .item')).toHaveCount(1);
+});
+
 test('delete all items clears the stock list', async ({ page }) => {
   await expect(page.locator('#inventoryList .item')).toHaveCount(3);   // seeded samples
   page.on('dialog', (d) => d.accept());                                // confirm()

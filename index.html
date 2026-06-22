@@ -234,14 +234,26 @@
       </div>
 
       <div class="card" data-owner>
+        <h3 data-i18n="catalogue_title">📋 Catalogue (CSV / Excel)</h3>
+        <p class="muted" data-i18n="catalogue_help">Load your whole product list at once. In Excel, "Save As → CSV". Items match by barcode, then item number, then name.</p>
+        <div class="row">
+          <button id="importItemsBtn" class="btn primary" data-i18n="import_items">Import items (CSV)</button>
+          <button id="exportItemsBtn" class="btn" data-i18n="export_items">Export items (CSV)</button>
+          <button id="templateBtn" class="btn ghost" data-i18n="csv_template">Template</button>
+          <input id="importItemsInput" type="file" accept=".csv,text/csv" hidden />
+        </div>
+      </div>
+
+      <div class="card" data-owner>
         <h3 data-i18n="data_title">🗑️ Data</h3>
         <button id="deleteAllItemsBtn" class="btn danger full" data-i18n="delete_all_items">Delete all items</button>
         <button id="resetAllBtn" class="btn danger full" data-i18n="reset_all">Reset everything (fresh start)</button>
         <p class="muted" data-i18n="data_help">"Delete all items" clears your product list only. "Reset" wipes everything (items, sales, khata, settings) — use before handing a clean app to a new shop.</p>
       </div>
 
+      <button id="installAppBtn" class="btn primary full hidden" data-i18n="install_app">📲 Install app on this phone</button>
       <button id="shareAppBtn" class="btn full" data-i18n="share_app">📲 Share this app</button>
-      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v14</span></p>
+      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v15</span></p>
     </section>
   </main>
 
