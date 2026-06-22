@@ -5,3 +5,8 @@ playwright-report
 playwright.config.js
 memory
 .github
+docs
+tools
+SCREENSHOTS.md
+Dockerfile
+nginx.conf

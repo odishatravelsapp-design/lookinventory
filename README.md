@@ -14,6 +14,12 @@ A **$0-cost, offline-first** Progressive Web App (PWA) that lets a shopkeeper:
 
 No app store, no server, no monthly bills. Data is stored **on the phone** (IndexedDB) and works completely offline.
 
+📸 **[See screenshots →](SCREENSHOTS.md)**
+
+|  |  |  |
+|---|---|---|
+| ![Stock](docs/screenshots/02-stock.png) | ![Billing](docs/screenshots/04-billing.png) | ![Dark mode](docs/screenshots/09-dark.png) |
+
 ---
 
 ## How to run it (try it in 30 seconds)
