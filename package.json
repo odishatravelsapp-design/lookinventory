@@ -5,12 +5,15 @@
   "private": true,
   "scripts": {
     "start": "npx http-server -p 8080 -c-1 .",
+    "build": "node tools/build.js",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:install": "playwright install --with-deps chromium"
   },
   "devDependencies": {
     "@playwright/test": "^1.45.0",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "javascript-obfuscator": "^4.1.1",
+    "terser": "^5.31.0"
   }
 }

@@ -400,9 +400,11 @@ html.dark .profit-chip { background: #064e3b; color: #d1fae5; }
   position: fixed; inset: 0; z-index: 100; background: var(--green);
   display: flex; align-items: center; justify-content: center; color: #fff;
 }
-.lock-box { text-align: center; }
+.lock-box { text-align: center; padding: 24px; }
 .logo-big { font-size: 56px; }
 .lock-error { color: #fecaca; min-height: 20px; }
+.lock-screen.revoked { background: #7f1d1d; z-index: 200; }
+.lock-screen.revoked p { max-width: 320px; opacity: .95; }
 
 /* Dark mode */
 html.dark {

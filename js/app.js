@@ -1579,6 +1579,43 @@
   $('#helpCloseBtn').addEventListener('click', () => $('#helpDialog').close());
   $('#obHelp').addEventListener('click', openHelp);
 
+  // ---------- Admin remote access control (kill switch) ----------
+  async function getDeviceId() {
+    let id = await DB.getMeta('deviceId', '');
+    if (!id) {
+      id = 'D-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+      await DB.setMeta('deviceId', id);
+    }
+    return id;
+  }
+  function lockRevoked(msg) {
+    if (msg) $('#revokedMsg').textContent = msg;
+    $('#revokedScreen').classList.remove('hidden');
+  }
+  async function enforceAccess() {
+    if (!Flags.on('accessControl')) return;
+    const url = (CONFIG && CONFIG.accessListUrl) || await DB.getMeta('accessListUrl', '');
+    // Already revoked locally → stay locked even offline.
+    if (await DB.getMeta('revoked', false)) { lockRevoked(await DB.getMeta('revokedMsg', '')); return; }
+    if (!url || !navigator.onLine) return;   // can't check offline → fail open (offline-first)
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return;
+      const list = await res.json();
+      const deviceId = await getDeviceId();
+      const shopCode = await DB.getMeta('fbShopCode', '');
+      const blocked = list.killAll === true
+        || (Array.isArray(list.blocked) && (list.blocked.includes(deviceId) || (shopCode && list.blocked.includes(shopCode))));
+      if (blocked) {
+        await DB.setMeta('revoked', true);
+        await DB.setMeta('revokedMsg', list.message || '');
+        lockRevoked(list.message || '');
+      } else if (await DB.getMeta('revoked', false)) {
+        await DB.setMeta('revoked', false);   // admin re-enabled this device
+      }
+    } catch (_) { /* network/parse error → fail open, app keeps working */ }
+  }
+
   // ---------- Park / hold bills ----------
   let parked = [];
   async function loadParked() { parked = await DB.getMeta('parkedBills', []); renderParked(); }
@@ -2183,6 +2220,7 @@
   // When internet returns: reconnect live sync if configured, flush a backup, re-arm Firebase.
   window.addEventListener('online', async () => {
     updateNetwork();
+    enforceAccess();   // re-check kill switch as soon as we're back online
     if (!Cloud.isReady()) {
       const cfg = await DB.getMeta('fbConfig', '') || (CONFIG && CONFIG.firebase ? JSON.stringify(CONFIG.firebase) : '');
       const code = await DB.getMeta('fbShopCode', '');
@@ -2210,6 +2248,8 @@
     await maybeLock();    // show PIN screen first if one is set
 
     Flags.init(await DB.getMeta('flagOverrides', {}));
+    await enforceAccess();   // admin kill-switch — locks revoked devices
+    $('#deviceIdLabel').textContent = await getDeviceId();
     applyFlags();
     renderFeatures();
     await loadParked();

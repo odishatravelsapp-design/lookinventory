@@ -229,6 +229,7 @@
         <h3 data-i18n="about_title">ℹ️ About &amp; privacy</h3>
         <button id="helpBtn" class="btn full" data-i18n="help_btn">📖 How to use this app</button>
         <button id="privacyBtn" class="btn ghost full" data-i18n="privacy_btn">Privacy &amp; terms</button>
+        <p class="muted" data-flag="accessControl">Device ID: <code id="deviceIdLabel">—</code></p>
         <p class="muted">Your data stays on your phone. Nothing is sent anywhere unless you turn on Google/Firebase backup.</p>
       </div>
 
@@ -513,6 +514,15 @@
     <label class="field"><span data-i18n="amount">Amount ₹</span><input id="payAmount" type="number" min="0" step="0.01" /></label>
     <button id="payConfirmBtn" class="btn primary full" data-i18n="save">Save payment</button>
   </dialog>
+
+  <!-- Access-revoked overlay (admin kill switch) -->
+  <div id="revokedScreen" class="lock-screen revoked hidden">
+    <div class="lock-box">
+      <div class="logo-big">🔒</div>
+      <h2 data-i18n="revoked_title">Access disabled</h2>
+      <p id="revokedMsg">This app has been disabled by the administrator. Please contact your provider.</p>
+    </div>
+  </div>
 
   <!-- PIN lock overlay -->
   <div id="lockScreen" class="lock-screen hidden">

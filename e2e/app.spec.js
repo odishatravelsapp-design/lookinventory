@@ -141,9 +141,11 @@ test('item number (SKU) is saved and searchable', async ({ page }) => {
   await page.fill('#f_price', '450');
   await page.fill('#f_qty', '8');
   await page.click('#itemForm button[type="submit"]');
+  await expect(page.locator('#toast')).toContainText('Saved');   // wait until persisted+rendered
   await page.fill('#searchBox', 'RICE05');     // find by item number
-  await expect(page.locator('#inventoryList .item')).toHaveCount(1);
-  await expect(page.locator('#inventoryList .item-name')).toContainText('Basmati Rice 5kg');
+  const rows = page.locator('#inventoryList .item');
+  await expect(rows).toHaveCount(1);           // retryable — waits out the search debounce
+  await expect(rows.first()).toContainText('Basmati Rice 5kg');
 });
 
 test('tutorial / help screen opens with steps', async ({ page }) => {

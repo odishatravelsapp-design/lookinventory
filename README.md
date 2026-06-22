@@ -111,6 +111,30 @@ This is the **developer's** one-time step. Each shopkeeper then just taps "Sign 
 - **PWA update prompt**: when a new version is deployed, a "New version ready — Refresh" banner appears instead of users getting stuck on a stale cache.
 - **Privacy & data safety**: in-app **Privacy & terms**, a [PRIVACY.md](PRIVACY.md) for app-store listing, and a [firestore.rules](firestore.rules) file to lock down live-sync. Firestore sync auto-trims very long history to stay under the 1 MiB document limit (full history stays local + in Drive backups).
 
+## Production build (hardened) & deploy
+
+```sh
+npm install
+npm run build      # → ./dist : one obfuscated bundle, console + debugger disabled
+```
+
+`dist/` is what you deploy. **Vercel** is already configured (`vercel.json`): it runs `npm run build` and serves `dist/`. Import the repo, framework preset **Other**, deploy.
+
+> **Honest security note.** The build minifies + obfuscates the JS, strips `console`, and adds anti-DevTools/self-defending measures — this **deters casual copying and hides logic**, but any code that runs in a browser can ultimately be read by a determined person. It is *hardening, not DRM*. The only truly uncrackable logic lives on a server, which this offline-first app intentionally avoids. Don't put real secrets (API keys you must protect) in the client.
+
+## Admin remote access control (kill switch)
+
+You (the admin) can disable the app on any device, even after it's deployed:
+
+1. Host a small JSON you control (GitHub raw, a Vercel route, a gist) — e.g.
+   ```json
+   { "killAll": false, "blocked": ["D-XXXX-YYYY"], "message": "Subscription expired — contact us." }
+   ```
+2. Put its URL in `js/config.js → accessListUrl` and rebuild.
+3. Each device shows its **Device ID** under **More → About**. To revoke one, add that ID to `"blocked"` (or set `"killAll": true` to disable everyone). The device locks the next time it's online and stays locked.
+
+**Limits (honest):** enforcement is client-side and checked **when online** — a device that's offline can't be reached until it reconnects, and a determined user could bypass a purely client-side check. For hard enforcement you'd need server-validated licensing. This is good for legitimate "expired/abuse" revocation, not for stopping a skilled attacker.
+
 ## Testing (Playwright E2E)
 
 End-to-end tests run in a real mobile-Chrome profile:

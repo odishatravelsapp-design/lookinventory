@@ -12,6 +12,12 @@ const CONFIG = {
   // don't paste config. Leave null to keep Firebase off / manual. See README.
   firebase: null,   // e.g. { apiKey:'...', authDomain:'...', projectId:'...', appId:'...' }
 
+  // ADMIN remote access control (kill switch). Host a small JSON you control at this URL.
+  // Format: { "killAll": false, "blocked": ["<deviceId or shopCode>", ...], "message": "..." }
+  // The app checks it when online and locks any blocked device. Leave '' to disable.
+  // Each device's ID is shown in the app under More → About (give it to revoke that device).
+  accessListUrl: '',
+
   // Feature flags — turn whole features on/off without touching code.
   // Defaults are all true. Shopkeepers can also toggle these in More → Features.
   flags: {
@@ -39,6 +45,7 @@ const CONFIG = {
     challan: true,        // delivery challan
     expenses: true,       // expense tracking + net P&L
     valuation: true,      // inventory valuation
-    favourites: true      // quick-sell favourites grid
+    favourites: true,     // quick-sell favourites grid
+    accessControl: true   // admin remote revoke / kill switch
   }
 };
