@@ -1341,6 +1341,21 @@
   }
   $('#openLabelsBtn').addEventListener('click', async () => { await renderLabels(); $('#labelsDialog').showModal(); });
   $('#labelsCloseBtn').addEventListener('click', () => $('#labelsDialog').close());
+
+  // Bulk: assign a barcode to every item that has none, in one tap (then they're printable + tagged).
+  $('#genMissingBtn').addEventListener('click', async () => {
+    const missing = items.filter((it) => !it.barcode);
+    if (!missing.length) return toast('All items already have a code');
+    let n = await DB.getMeta('bcCounter', 0);
+    for (const it of missing) { n += 1; it.barcode = 'LI' + String(200000 + n); await DB.saveItem(it); labelPick.add(it.id); }
+    await DB.setMeta('bcCounter', n);
+    await reload(); await renderLabels(); scheduleBackup();
+    toast('Generated ' + missing.length + ' codes — now selectable to print');
+  });
+  $('#selectAllLabelsBtn').addEventListener('click', async () => {
+    items.filter((it) => it.barcode).forEach((it) => labelPick.add(it.id));
+    await renderLabels();
+  });
   $('#labelsList').addEventListener('change', (e) => {
     if (e.target.classList.contains('lblchk')) {
       const id = e.target.dataset.id;

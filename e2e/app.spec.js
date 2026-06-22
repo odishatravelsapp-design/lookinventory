@@ -148,6 +148,22 @@ test('item number (SKU) is saved and searchable', async ({ page }) => {
   await expect(rows.first()).toContainText('Basmati Rice 5kg');
 });
 
+test('bulk barcode: generate codes for items without one', async ({ page }) => {
+  // add an item with no barcode
+  await page.click('#addItemBtn');
+  await page.fill('#f_name', 'Loose Rice (kg)');
+  await page.fill('#f_price', '50');
+  await page.click('#itemForm button[type="submit"]');
+  await expect(page.locator('#toast')).toContainText('Saved');
+  // open Labels → generate missing codes in one tap
+  await page.click('.tab[data-view="settings"]');
+  await page.click('#openLabelsBtn');
+  await page.click('#genMissingBtn');
+  await expect(page.locator('#toast')).toContainText('Generated');
+  // the item now has a checked, enabled label entry
+  await expect(page.locator('#labelsList .lblchk:checked')).not.toHaveCount(0);
+});
+
 test('tutorial / help screen opens with steps', async ({ page }) => {
   await page.click('.tab[data-view="settings"]');
   await page.click('#helpBtn');
