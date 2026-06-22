@@ -12,6 +12,14 @@ const CONFIG = {
   // don't paste config. Leave null to keep Firebase off / manual. See README.
   firebase: null,   // e.g. { apiKey:'...', authDomain:'...', projectId:'...', appId:'...' }
 
+  // ---- Licensing (paid plans). OFF until you set licenseServerUrl + licensePublicKey. ----
+  // App ships FREE; flip these on later to charge. See server/ and README.
+  licenseServerUrl: '',      // POST endpoint that returns a signed token
+  licensePublicKey: null,    // ECDSA P-256 public key (JWK) — verifies tokens; safe to embed
+  trialDays: 14,             // free trial before a paid token is required
+  leaseHours: 48,            // how long a token works OFFLINE before it must re-validate online
+  subscribeUrl: '',          // payment link (Razorpay/UPI) shown on the paywall
+
   // ADMIN remote access control (kill switch). Host a small JSON you control at this URL.
   // Format: { "killAll": false, "blocked": ["<deviceId or shopCode>", ...], "message": "..." }
   // The app checks it when online and locks any blocked device. Leave '' to disable.
@@ -46,6 +54,17 @@ const CONFIG = {
     expenses: true,       // expense tracking + net P&L
     valuation: true,      // inventory valuation
     favourites: true,     // quick-sell favourites grid
-    accessControl: true   // admin remote revoke / kill switch
+    accessControl: true,  // admin remote revoke / kill switch
+    licensing: true       // trial + paid subscription gate (inert until configured above)
   }
 };
+
+// Optional config injection (white-label / tests): set window.__CONFIG_OVERRIDE before load.
+if (typeof window !== 'undefined' && window.__CONFIG_OVERRIDE) {
+  try {
+    const o = window.__CONFIG_OVERRIDE;
+    const flags = o.flags; delete o.flags;
+    Object.assign(CONFIG, o);
+    if (flags) Object.assign(CONFIG.flags, flags);
+  } catch (e) { /* ignore bad override */ }
+}

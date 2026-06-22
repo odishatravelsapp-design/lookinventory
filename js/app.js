@@ -2206,6 +2206,64 @@
     }
   });
 
+  // ---------- Licensing: trial → paid (48h offline lease) ----------
+  function showLicense(title, msg, opts) {
+    opts = opts || {};
+    $('#licenseTitle').textContent = title;
+    $('#licenseMsg').textContent = msg;
+    const sub = $('#subscribeBtn');
+    if (CONFIG.subscribeUrl) { sub.href = CONFIG.subscribeUrl; sub.classList.remove('hidden'); }
+    else sub.classList.add('hidden');
+    $('#licenseScreen').classList.remove('hidden');
+  }
+  function hideLicense() { $('#licenseScreen').classList.add('hidden'); }
+  function showTrialBanner(days) {
+    const b = $('#trialBanner');
+    b.textContent = `🎁 Trial — ${days} day${days === 1 ? '' : 's'} left. Tap to subscribe.`;
+    b.classList.remove('hidden');
+    b.onclick = () => { if (CONFIG.subscribeUrl) window.open(CONFIG.subscribeUrl, '_blank'); };
+  }
+
+  async function enforceLicense() {
+    if (!Flags.on('licensing') || !License.configured()) return true;   // free app
+    let trialStart = await DB.getMeta('trialStart', 0);
+    if (!trialStart) { trialStart = Date.now(); await DB.setMeta('trialStart', trialStart); }
+    let token = await DB.getMeta('licenseToken', '');
+    const deviceId = await getDeviceId();
+    const shop = await DB.getMeta('fbShopCode', '');
+
+    let res = await License.evaluate({ token, trialStart, now: Date.now(), online: navigator.onLine });
+
+    // Try to refresh the token when online (covers: just paid, lease expired, trial→paid).
+    if (navigator.onLine && (res.state === 'lease_expired' || res.state === 'expired' || res.state === 'trial')) {
+      try {
+        const fresh = await License.renew(deviceId, shop);
+        if (await License.verify(fresh)) {
+          token = fresh; await DB.setMeta('licenseToken', fresh);
+          res = await License.evaluate({ token, trialStart, now: Date.now(), online: true });
+        }
+      } catch (_) { /* offline or not licensed yet → keep current state */ }
+    }
+
+    hideLicense(); $('#trialBanner').classList.add('hidden');
+    if (res.state === 'active' || res.state === 'off') return true;
+    if (res.state === 'trial') { showTrialBanner(res.daysLeft); return true; }
+    if (res.state === 'lease_expired') {
+      showLicense('Please reconnect', 'Connect to the internet once to verify your subscription, then continue.');
+      return false;
+    }
+    // expired / no trial left
+    showLicense(t('sub_needed') || 'Subscription needed',
+      (res.msg || 'Your free trial has ended. Subscribe to keep using the app.'));
+    return false;
+  }
+
+  $('#licenseRetryBtn').addEventListener('click', async () => {
+    $('#licenseRetryBtn').textContent = 'Checking…';
+    await enforceLicense();
+    $('#licenseRetryBtn').textContent = "I've paid · Retry";
+  });
+
   // ---------- Online/offline indicator ----------
   function updateNetwork() {
     if (navigator.onLine) {
@@ -2220,7 +2278,8 @@
   // When internet returns: reconnect live sync if configured, flush a backup, re-arm Firebase.
   window.addEventListener('online', async () => {
     updateNetwork();
-    enforceAccess();   // re-check kill switch as soon as we're back online
+    enforceAccess();    // re-check kill switch as soon as we're back online
+    enforceLicense();   // renew the offline lease while we have a connection
     if (!Cloud.isReady()) {
       const cfg = await DB.getMeta('fbConfig', '') || (CONFIG && CONFIG.firebase ? JSON.stringify(CONFIG.firebase) : '');
       const code = await DB.getMeta('fbShopCode', '');
@@ -2249,6 +2308,7 @@
 
     Flags.init(await DB.getMeta('flagOverrides', {}));
     await enforceAccess();   // admin kill-switch — locks revoked devices
+    await enforceLicense();  // trial / subscription gate (inert unless configured)
     $('#deviceIdLabel').textContent = await getDeviceId();
     applyFlags();
     renderFeatures();

@@ -16,7 +16,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const write = (p, c) => { fs.mkdirSync(path.dirname(path.join(dist, p)), { recursive: true }); fs.writeFileSync(path.join(dist, p), c); };
 
 // Load order matters — globals are defined before app.js uses them.
-const JS_ORDER = ['config', 'flags', 'i18n', 'db', 'scanner', 'sync', 'btprint', 'barcode', 'cloud', 'app'];
+const JS_ORDER = ['config', 'flags', 'i18n', 'db', 'scanner', 'sync', 'btprint', 'barcode', 'cloud', 'license', 'app'];
 
 (async () => {
   fs.rmSync(dist, { recursive: true, force: true });

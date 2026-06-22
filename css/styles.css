@@ -405,6 +405,14 @@ html.dark .profit-chip { background: #064e3b; color: #d1fae5; }
 .lock-error { color: #fecaca; min-height: 20px; }
 .lock-screen.revoked { background: #7f1d1d; z-index: 200; }
 .lock-screen.revoked p { max-width: 320px; opacity: .95; }
+.lock-screen.license { background: var(--green-grad); z-index: 200; }
+.lock-screen.license p { max-width: 320px; opacity: .95; margin-bottom: 16px; }
+.lock-screen.license .btn { max-width: 280px; margin: 6px auto; }
+.trial-banner {
+  position: fixed; bottom: 78px; left: 50%; transform: translateX(-50%); z-index: 55;
+  background: #1e293b; color: #fff; padding: 8px 14px; border-radius: 999px; font-size: 13px;
+  box-shadow: var(--shadow); cursor: pointer; max-width: 92vw;
+}
 
 /* Dark mode */
 html.dark {

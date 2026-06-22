@@ -234,7 +234,7 @@
       </div>
 
       <button id="shareAppBtn" class="btn full" data-i18n="share_app">📲 Share this app</button>
-      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v11</span></p>
+      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v12</span></p>
     </section>
   </main>
 
@@ -515,6 +515,20 @@
     <button id="payConfirmBtn" class="btn primary full" data-i18n="save">Save payment</button>
   </dialog>
 
+  <!-- License / paywall overlay -->
+  <div id="licenseScreen" class="lock-screen license hidden">
+    <div class="lock-box">
+      <div class="logo-big">🛒</div>
+      <h2 id="licenseTitle" data-i18n="sub_needed">Subscription needed</h2>
+      <p id="licenseMsg">Your free trial has ended. Subscribe to keep using the app.</p>
+      <a id="subscribeBtn" class="btn primary full" href="#" target="_blank" rel="noopener" data-i18n="subscribe">Subscribe</a>
+      <button id="licenseRetryBtn" class="btn full" data-i18n="paid_retry">I've paid · Retry</button>
+    </div>
+  </div>
+
+  <!-- Trial banner -->
+  <div id="trialBanner" class="trial-banner hidden"></div>
+
   <!-- Access-revoked overlay (admin kill switch) -->
   <div id="revokedScreen" class="lock-screen revoked hidden">
     <div class="lock-box">
@@ -603,6 +617,7 @@
   <script src="js/btprint.js"></script>
   <script src="js/barcode.js"></script>
   <script src="js/cloud.js"></script>
+  <script src="js/license.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

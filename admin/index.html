@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Look Inventory — Admin</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:760px;margin:0 auto;padding:20px;background:#f1f5f9;color:#0f172a}
+  h1{font-size:20px} .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:12px 0}
+  label{display:block;font-size:13px;color:#64748b;margin:8px 0 3px} input,select{width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px}
+  .row{display:flex;gap:8px;flex-wrap:wrap} .row>*{flex:1}
+  button{background:#16a34a;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer}
+  button.ghost{background:#fff;color:#dc2626;border:1px solid #fecaca}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px} td,th{border-bottom:1px solid #e2e8f0;padding:7px;text-align:left}
+  .muted{color:#64748b;font-size:12px}
+</style>
+</head>
+<body>
+  <h1>🛒 Look Inventory — Admin</h1>
+  <p class="muted">Internal tool. Point it at your deployed API and enter the admin key. Not shipped to shopkeepers.</p>
+
+  <div class="card">
+    <div class="row">
+      <div><label>API base URL</label><input id="apiBase" placeholder="https://your-app.vercel.app" /></div>
+      <div><label>Admin key</label><input id="adminKey" type="password" placeholder="ADMIN_KEY" /></div>
+    </div>
+    <p style="margin-top:10px"><button id="loadBtn">Load devices</button></p>
+    <span id="status" class="muted"></span>
+  </div>
+
+  <div class="card">
+    <h3>Set / update plan</h3>
+    <div class="row">
+      <div><label>Device ID (from shopkeeper's More → About)</label><input id="dId" placeholder="D-XXXX-YYYY" /></div>
+      <div><label>Tier</label><select id="dTier"><option>pro</option><option>basic</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Expires (YYYY-MM-DD, blank = perpetual)</label><input id="dExp" type="date" /></div>
+      <div><label>Shop code (optional)</label><input id="dShop" /></div>
+    </div>
+    <label>Message shown if expired (optional)</label><input id="dMsg" />
+    <p style="margin-top:10px"><button id="saveBtn">Save plan</button></p>
+  </div>
+
+  <div class="card">
+    <h3>Devices</h3>
+    <table id="tbl"><thead><tr><th>Device</th><th>Tier</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>
+  </div>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = (p) => $('#apiBase').value.replace(/\/$/, '') + p;
+const hdr = () => ({ 'Content-Type': 'application/json', 'x-admin-key': $('#adminKey').value });
+
+async function load() {
+  $('#status').textContent = 'Loading…';
+  try {
+    const r = await fetch(api('/api/admin'), { headers: hdr() });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    render(d.devices || {});
+    $('#status').textContent = 'Loaded ' + Object.keys(d.devices || {}).length + ' device(s).';
+  } catch (e) { $('#status').textContent = 'Error: ' + e.message; }
+}
+function render(devs) {
+  const rows = Object.entries(devs).map(([id, r]) => {
+    const exp = r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : 'perpetual';
+    const st = r.revoked ? '⛔ revoked' : '✅ active';
+    return `<tr><td>${id}</td><td>${r.tier||''}</td><td>${exp}</td><td>${st}</td>
+      <td><button class="ghost" data-act="${r.revoked?'unrevoke':'revoke'}" data-id="${id}">${r.revoked?'Un-revoke':'Revoke'}</button></td></tr>`;
+  }).join('');
+  $('#tbl tbody').innerHTML = rows || '<tr><td colspan=5 class=muted>No devices yet.</td></tr>';
+}
+async function post(payload) {
+  const r = await fetch(api('/api/admin'), { method:'POST', headers: hdr(), body: JSON.stringify(payload) });
+  const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+  render(d.devices || {});
+}
+$('#loadBtn').onclick = load;
+$('#saveBtn').onclick = async () => {
+  try {
+    const exp = $('#dExp').value ? new Date($('#dExp').value).getTime() : null;
+    await post({ action:'setPlan', deviceId:$('#dId').value.trim(), tier:$('#dTier').value, expiresAt:exp, shop:$('#dShop').value.trim(), message:$('#dMsg').value.trim() });
+    $('#status').textContent = 'Plan saved.';
+  } catch (e) { $('#status').textContent = 'Error: ' + e.message; }
+};
+$('#tbl').onclick = async (e) => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  try { await post({ action:b.dataset.act, deviceId:b.dataset.id }); } catch (e2) { $('#status').textContent = 'Error: ' + e2.message; }
+};
+</script>
+</body>
+</html>

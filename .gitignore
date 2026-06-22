@@ -5,3 +5,5 @@ playwright-report/
 .DS_Store
 memory/
 shots/
+server/keys/
+server/data/
