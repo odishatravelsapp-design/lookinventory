@@ -326,6 +326,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 /* Privacy */
 .privacy-body p { font-size: 14px; line-height: 1.5; }
 
+/* Tutorial / Help */
+.help-content { display: flex; flex-direction: column; gap: 12px; }
+.help-step { display: flex; gap: 12px; align-items: flex-start; }
+.help-ic {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+  font-size: 22px; background: #ecfdf5; border: 1px solid #bbf7d0;
+}
+html.dark .help-ic { background: #064e3b; border-color: #065f46; }
+.help-step b { font-size: 15px; }
+.help-step p { margin: 3px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
 /* Voice + profit + today bar */
 .voice-hint { margin: -4px 0 8px; font-style: italic; }
 .today-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 13px 15px; margin: 12px 0; box-shadow: var(--shadow); }

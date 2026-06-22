@@ -227,12 +227,13 @@
 
       <div class="card">
         <h3 data-i18n="about_title">ℹ️ About &amp; privacy</h3>
+        <button id="helpBtn" class="btn full" data-i18n="help_btn">📖 How to use this app</button>
         <button id="privacyBtn" class="btn ghost full" data-i18n="privacy_btn">Privacy &amp; terms</button>
         <p class="muted">Your data stays on your phone. Nothing is sent anywhere unless you turn on Google/Firebase backup.</p>
       </div>
 
       <button id="shareAppBtn" class="btn full" data-i18n="share_app">📲 Share this app</button>
-      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v10</span></p>
+      <p class="muted version">Look Inventory · offline-first PWA · $0 cost · <span id="appVer">v11</span></p>
     </section>
   </main>
 
@@ -255,7 +256,13 @@
           <button type="button" id="f_voiceBtn" class="btn ghost small" title="Speak">🎤</button>
         </span>
       </label>
-      <label class="field"><span>Barcode</span>
+      <label class="field"><span data-i18n="item_no">Item number (SKU)</span>
+        <span class="barcode-row">
+          <input id="f_sku" type="text" placeholder="e.g. RICE01 (yours)" />
+          <button type="button" id="f_skuGenBtn" class="btn ghost small" data-i18n="gen_code">Generate</button>
+        </span>
+      </label>
+      <label class="field"><span data-i18n="barcode">Barcode</span>
         <span class="barcode-row">
           <input id="f_barcode" type="text" inputmode="numeric" />
           <button type="button" id="f_scanBtn" class="btn ghost small">Scan</button>
@@ -437,6 +444,7 @@
         <h2>✅ All set</h2>
         <label class="switch-row"><span>Remove sample items</span><input type="checkbox" id="obClear" checked /></label>
         <p class="muted">💡 Open <b>More</b> anytime for a PIN lock, live two-phone sync, and language.</p>
+        <button id="obHelp" class="btn full" data-i18n="tour_show">📖 Show me how</button>
         <button id="obInstall" class="btn full hidden">📲 Install app on this phone</button>
         <div class="ob-actions"><button class="btn ghost ob-back">← Back</button><button class="btn primary ob-finish" data-i18n="start_using">Start using ✓</button></div>
       </div>
@@ -444,6 +452,15 @@
       <button id="obSkip" class="ob-skip">Skip setup</button>
     </div>
   </div>
+
+  <!-- Tutorial / Help dialog -->
+  <dialog id="helpDialog">
+    <div class="dialog-head">
+      <h3 data-i18n="help_title">📖 How to use</h3>
+      <button id="helpCloseBtn" class="btn ghost" data-i18n="close">Close</button>
+    </div>
+    <div id="helpContent" class="help-content"></div>
+  </dialog>
 
   <!-- Receivables / aging dialog -->
   <dialog id="receivablesDialog">

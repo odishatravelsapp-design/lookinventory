@@ -14,4 +14,8 @@ Captured live from the running app (mobile Chrome / Pixel 7 profile).
 |---|---|---|
 | ![To Order](docs/screenshots/07-to-order.png) | ![More](docs/screenshots/08-more.png) | ![Dark mode](docs/screenshots/09-dark.png) |
 
+| Built-in tutorial |
+|---|
+| ![Tutorial](docs/screenshots/10-tutorial.png) |
+
 > Regenerate anytime: `npm start` (serves on :8080), then `node tools/shots.js` → writes to `shots/`.

@@ -134,6 +134,26 @@ test('returns/refund restocks the item', async ({ page }) => {
   await expect(qty).toHaveText('24');
 });
 
+test('item number (SKU) is saved and searchable', async ({ page }) => {
+  await page.click('#addItemBtn');
+  await page.fill('#f_name', 'Basmati Rice 5kg');
+  await page.fill('#f_sku', 'RICE05');
+  await page.fill('#f_price', '450');
+  await page.fill('#f_qty', '8');
+  await page.click('#itemForm button[type="submit"]');
+  await page.fill('#searchBox', 'RICE05');     // find by item number
+  await expect(page.locator('#inventoryList .item')).toHaveCount(1);
+  await expect(page.locator('#inventoryList .item-name')).toContainText('Basmati Rice 5kg');
+});
+
+test('tutorial / help screen opens with steps', async ({ page }) => {
+  await page.click('.tab[data-view="settings"]');
+  await page.click('#helpBtn');
+  await expect(page.locator('#helpDialog')).toBeVisible();
+  await expect(page.locator('#helpContent .help-step')).toHaveCount(9);
+  await expect(page.locator('#helpContent')).toContainText('Make a bill');
+});
+
 test('credit bill creates a receivable; partial payment reduces it', async ({ page }) => {
   await page.click('.tab[data-view="bill"]');
   await page.fill('#billSearch', 'Parle');

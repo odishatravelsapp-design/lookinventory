@@ -72,12 +72,16 @@ const DB = (() => {
     return reqToPromise(store.get(id));
   }
 
-  async function findByBarcode(barcode) {
-    if (!barcode) return null;
+  // Resolve a scanned/typed code to an item: barcode first, then item number (SKU).
+  async function findByBarcode(code) {
+    if (!code) return null;
+    const key = String(code);
     const store = await tx('items', 'readonly');
     const idx = store.index('barcode');
-    const res = await reqToPromise(idx.getAll(String(barcode)));
-    return res && res.length ? res[0] : null;
+    const res = await reqToPromise(idx.getAll(key));
+    if (res && res.length) return res[0];
+    const all = await reqToPromise(store.getAll());
+    return all.find((it) => it.sku && String(it.sku) === key) || null;
   }
 
   async function saveItem(item) {

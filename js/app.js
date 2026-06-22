@@ -51,7 +51,7 @@
       <li class="item ${low ? 'low' : ''}" data-id="${it.id}">
         ${thumb}
         <div class="item-main">
-          <div class="item-name">${escapeHtml(it.name)}${it.barcode ? ` <span class="bc">#${escapeHtml(it.barcode)}</span>` : ''}</div>
+          <div class="item-name">${escapeHtml(it.name)}${it.sku ? ` <span class="bc">${escapeHtml(it.sku)}</span>` : (it.barcode ? ` <span class="bc">#${escapeHtml(it.barcode)}</span>` : '')}</div>
           <div class="item-sub">${money(it.price)} · ${it.quantity} ${escapeHtml(it.unit || 'pcs')}${it.category ? ' · ' + escapeHtml(it.category) : ''}${exp ? ` · <span class="exp ${exp.kind}">${exp.kind === 'expired' ? '⛔ expired' : '⏳ ' + exp.days + 'd'}</span>` : ''}</div>
         </div>
         <div class="item-actions">
@@ -73,7 +73,7 @@
     // Match across name, barcode, and category; supports multi-word ("amul milk").
     const terms = q.split(/\s+/);
     return items.filter((it) => {
-      const hay = (it.name + ' ' + (it.barcode || '') + ' ' + (it.category || '')).toLowerCase();
+      const hay = (it.name + ' ' + (it.barcode || '') + ' ' + (it.sku || '') + ' ' + (it.category || '')).toLowerCase();
       return terms.every((tm) => hay.includes(tm));
     });
   }
@@ -265,6 +265,7 @@
     $('#detailContent').innerHTML = `
       <h3>${escapeHtml(it.name)}</h3>
       ${it.photo ? `<img class="detail-photo" src="${it.photo}" alt="" />` : ''}
+      ${it.sku ? `<p class="muted">Item no: ${escapeHtml(it.sku)}</p>` : ''}
       ${it.barcode ? `<p class="muted">Barcode: ${escapeHtml(it.barcode)}</p>` : ''}
       ${it.description ? `<p>${escapeHtml(it.description)}</p>` : ''}
       <div class="detail-grid">
@@ -304,6 +305,7 @@
     $('#itemDialogTitle').textContent = isEdit ? 'Edit item' : 'Add item';
     $('#f_id').value = it ? it.id : '';
     $('#f_name').value = it ? it.name : '';
+    $('#f_sku').value = it ? (it.sku || '') : '';
     $('#f_barcode').value = it ? it.barcode : '';
     $('#f_desc').value = it ? it.description || '' : '';
     $('#f_price').value = it ? it.price : '';
@@ -375,6 +377,7 @@
     const item = {
       id: $('#f_id').value || undefined,
       name,
+      sku: $('#f_sku').value.trim(),
       barcode: $('#f_barcode').value.trim(),
       description: $('#f_desc').value.trim(),
       price: $('#f_price').value,
@@ -424,12 +427,19 @@
     startScan();
   });
 
-  // Generate an internal barcode for loose/unpackaged items (printable label later).
-  $('#f_genBtn').addEventListener('click', async () => {
+  // Auto-generate an item number (SKU) — sequential, human-readable.
+  $('#f_skuGenBtn').addEventListener('click', async () => {
     const n = (await DB.getMeta('skuCounter', 0)) + 1;
     await DB.setMeta('skuCounter', n);
+    $('#f_sku').value = 'SKU-' + String(n).padStart(4, '0');
+  });
+
+  // Generate a scannable barcode value for loose/unpackaged items (printable label later).
+  $('#f_genBtn').addEventListener('click', async () => {
+    const n = (await DB.getMeta('bcCounter', 0)) + 1;
+    await DB.setMeta('bcCounter', n);
     $('#f_barcode').value = 'LI' + String(200000 + n);   // unique, scannable Code128 value
-    toast('Code generated — print a label from More → Labels');
+    toast('Barcode generated — print a label from More → Labels');
   });
 
   // ---------- Scanner ----------
@@ -1086,6 +1096,7 @@
       creditTerms: await DB.getMeta('creditTerms', 0),
       invoiceCounter: await DB.getMeta('invoiceCounter', 0),
       skuCounter: await DB.getMeta('skuCounter', 0),
+      bcCounter: await DB.getMeta('bcCounter', 0),
       items: await DB.allItems(),
       sales: await DB.allSales(),
       khata: await DB.allKhata(),
@@ -1107,6 +1118,10 @@
     if (data.skuCounter != null) {
       const cur = await DB.getMeta('skuCounter', 0);
       await DB.setMeta('skuCounter', Math.max(cur, data.skuCounter));
+    }
+    if (data.bcCounter != null) {
+      const cur = await DB.getMeta('bcCounter', 0);
+      await DB.setMeta('bcCounter', Math.max(cur, data.bcCounter));
     }
     if (data.shopName) { await DB.setMeta('shopName', data.shopName); $('#shopName').textContent = data.shopName; shop.name = data.shopName; }
     if (data.shopPhone != null) { await DB.setMeta('shopPhone', data.shopPhone); shop.phone = data.shopPhone; }
@@ -1539,6 +1554,30 @@
   // ---------- Privacy / terms ----------
   $('#privacyBtn').addEventListener('click', () => $('#privacyDialog').showModal());
   $('#privacyCloseBtn').addEventListener('click', () => $('#privacyDialog').close());
+
+  // ---------- Tutorial / Help ----------
+  const TUTORIAL = [
+    { i: '📦', t: 'Add your stock', d: 'Open <b>Stock</b> → <b>+ Add</b>. Type the name, price, quantity. Tap <b>−</b> when you sell one, <b>+</b> when stock arrives. Tap a row to see full details.' },
+    { i: '🔖', t: 'Item number & barcode', d: 'Give each item your own <b>Item number</b> (or tap Generate). If a product has a printed <b>barcode</b>, scan it into the item — then the camera finds it instantly.' },
+    { i: '🧾', t: 'Make a bill', d: 'Open <b>Bill</b>. Search, scan, tap a favourite, or use 🎤 voice to add items. Pick <b>Cash / UPI / Udhaar / Split</b>, then <b>Generate bill</b> — stock drops automatically and a receipt opens.' },
+    { i: '📲', t: 'Give the receipt', d: 'On the receipt: <b>Print</b>, <b>Share image</b> (WhatsApp), or 🖨️ a Bluetooth printer. If you set a UPI ID, a <b>Pay</b> button shows for the customer.' },
+    { i: '📒', t: 'Khata (udhaar)', d: 'Choose <b>Udhaar</b> on a bill to record credit. In <b>More → Khata</b> see who owes you and tap <b>Remind</b> to message them on WhatsApp.' },
+    { i: '📝', t: 'Re-order stock', d: 'Low items appear in <b>To Order</b> automatically with a suggested quantity. Tap <b>Send list</b> to WhatsApp your wholesaler. Tick items when they arrive to restock.' },
+    { i: '📊', t: 'See your profit', d: '<b>More → Reports</b> shows today/week/month sales, profit, best-sellers and dead stock. Log rent/salary in <b>Expenses</b> for true net profit.' },
+    { i: '☁️', t: 'Keep data safe', d: 'Everything works offline. <b>Sign in with Google</b> in More to auto-backup, so your data is safe and follows you to a new phone.' },
+    { i: '🌐', t: 'Language & lock', d: 'Change language in <b>More → Language</b>. Set a <b>PIN</b> and turn on <b>cashier mode</b> so staff can bill but not see reports or change prices.' }
+  ];
+  function openHelp() {
+    $('#helpContent').innerHTML = TUTORIAL.map((s, n) => `
+      <div class="help-step">
+        <div class="help-ic">${s.i}</div>
+        <div><b>${n + 1}. ${s.t}</b><p>${s.d}</p></div>
+      </div>`).join('');
+    $('#helpDialog').showModal();
+  }
+  $('#helpBtn').addEventListener('click', openHelp);
+  $('#helpCloseBtn').addEventListener('click', () => $('#helpDialog').close());
+  $('#obHelp').addEventListener('click', openHelp);
 
   // ---------- Park / hold bills ----------
   let parked = [];
