@@ -1,5 +1,5 @@
 // Service worker: makes the app work fully offline by caching the app shell.
-const CACHE = 'look-inventory-v9';
+const CACHE = 'look-inventory-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -15,7 +15,9 @@ const ASSETS = [
   './js/barcode.js',
   './js/cloud.js',
   './js/app.js',
-  './icons/icon.svg'
+  './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
