@@ -18,6 +18,11 @@
     toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
   }
 
+  // Tiny haptic confirmation for tactile actions (sell/add/checkout). No-op where unsupported.
+  function buzz(ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (_) {}
+  }
+
   // ---------- Navigation ----------
   let currentView = 'inventory';
   function showView(name) {
@@ -197,15 +202,18 @@
     const it = items.find((x) => x.id === id);
     if (!it) return;
     if (e.target.classList.contains('sell')) {
-      if (it.quantity <= 0) return toast('Out of stock');
+      if (it.quantity <= 0) { buzz(40); return toast('Out of stock'); }
       it.quantity -= 1;
+      buzz();
       await DB.saveItem(it);
       await reload();
       toast('Sold 1 ' + it.name + (isLow(it) ? ' · now LOW' : ''));
     } else if (e.target.classList.contains('add')) {
       it.quantity += 1;
+      buzz();
       await DB.saveItem(it);
       await reload();
+      toast('+1 ' + it.name + ' · ' + it.quantity + ' ' + (it.unit || 'pcs') + ' in stock');
     }
   });
 
@@ -865,6 +873,7 @@
     await renderBill();
     showReceipt(sale);
     scheduleBackup();
+    buzz([18, 40, 18]);
     toast(sale.invoiceNo + ' · ' + money(sale.total) + (sale.unpaid ? ' (Udhaar)' : ''));
   });
 
@@ -1615,7 +1624,8 @@
       billing: 'Billing', reorder: 'To-Order', scan: 'Barcode scan', voice: 'Voice billing',
       khata: 'Khata', reports: 'Reports', purchases: 'Purchases', labels: 'Barcode labels',
       dayclose: 'Day close', returns: 'Returns', splitPay: 'Split payment', parkBill: 'Park bills',
-      stockAdjust: 'Stock adjustment', gst: 'GST fields', driveSync: 'Google Drive', liveSync: 'Live sync'
+      stockAdjust: 'Stock adjustment', gst: 'GST fields', driveSync: 'Google Drive', liveSync: 'Live sync',
+      training: 'Staff training quiz'
     };
     const all = Flags.all();
     $('#featuresList').innerHTML = Object.keys(labels).map((k) =>
@@ -1994,6 +2004,11 @@
   $('#openExpensesBtn').addEventListener('click', async () => { await renderExpenses(); $('#expensesDialog').showModal(); });
   $('#expensesCloseBtn').addEventListener('click', () => $('#expensesDialog').close());
 
+  // ---------- Training quiz (optional, feature-flagged off by default) ----------
+  $('#openTrainingBtn').addEventListener('click', () => {
+    if (typeof Training !== 'undefined') Training.open();
+  });
+
   // ---------- Theme ----------
   function applyTheme(dark, large) {
     document.documentElement.classList.toggle('dark', !!dark);
@@ -2117,7 +2132,10 @@
   // Shared sign-in used by both onboarding and Settings. Auto-restores on a fresh device.
   async function googleSignIn() {
     const cid = await effectiveClientId();
-    if (!cid) throw new Error('Google sign-in not configured (set CONFIG.googleClientId).');
+    if (!cid) {
+      toast('Google backup isn\'t set up yet — use "Export backup file" below for now.');
+      throw new Error('Google backup not configured by admin yet. Use File backup, or paste a Client ID in Settings.');
+    }
     await Sync.signIn(cid);
     $('#gBackupBtn').disabled = false;
     $('#gRestoreBtn').disabled = false;
@@ -2477,6 +2495,10 @@
     if (savedClientId) gClientId.value = savedClientId;
     // If the developer baked in a Client ID, hide the technical field — shopkeepers never see it.
     if (CONFIG && CONFIG.googleClientId) $('#clientIdField').classList.add('hidden');
+    // Make the "no login appears" case obvious when Google backup isn't set up yet.
+    if (!(CONFIG && CONFIG.googleClientId) && !savedClientId) {
+      $('#gStatus').textContent = 'Not set up yet — needs a one-time Google Client ID (admin). File backup below works now.';
+    }
 
     // Restore Firebase live-sync config and auto-connect if set (or use baked-in config).
     let fbCfg = await DB.getMeta('fbConfig', '');

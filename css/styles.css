@@ -435,6 +435,44 @@ html.large { font-size: 19px; }
 html.large .btn { padding: 13px 18px; }
 html.large .qbtn { width: 40px; height: 40px; }
 
+/* Training quiz — mobile-first: one card, big tap targets, instant feedback */
+.quiz-dlg { width: min(94vw, 460px); }
+.quiz-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.quiz-level {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; box-shadow: var(--shadow); transition: transform .1s ease;
+}
+.quiz-level:active { transform: scale(.97); }
+.quiz-level .ql-ic { font-size: 28px; }
+.quiz-level b { font-size: 15px; }
+.quiz-level small { color: var(--muted); font-size: 12px; text-align: center; }
+.quiz-dots { display: flex; gap: 5px; margin: 4px 0 14px; }
+.quiz-dots .qd { flex: 1; height: 4px; border-radius: 2px; background: var(--border); transition: background .2s; }
+.quiz-dots .qd.done { background: var(--green); }
+.quiz-dots .qd.now { background: var(--accent); }
+.quiz-q { font-size: 18px; font-weight: 700; line-height: 1.35; margin: 4px 0 14px; letter-spacing: -.01em; }
+.quiz-opts { display: flex; flex-direction: column; gap: 10px; }
+.quiz-opt {
+  width: 100%; text-align: left; padding: 15px 16px; border: 1.5px solid var(--border);
+  background: var(--card); color: var(--text); border-radius: var(--r); font-size: 15px;
+  font-weight: 600; cursor: pointer; transition: transform .08s ease, border-color .15s, background .15s;
+}
+.quiz-opt:active { transform: scale(.985); }
+.quiz-opt:disabled { cursor: default; }
+.quiz-opt.right { border-color: var(--green); background: #ecfdf5; color: #065f46; }
+.quiz-opt.wrong { border-color: var(--danger); background: #fff1f2; color: #9f1239; }
+html.dark .quiz-opt.right { background: #064e3b; color: #d1fae5; }
+html.dark .quiz-opt.wrong { background: #4c0519; color: #fecdd3; }
+.quiz-why { margin: 14px 0 4px; font-size: 14px; line-height: 1.45; padding: 11px 13px; border-radius: var(--r-sm); }
+.quiz-why.ok { background: #ecfdf5; color: #065f46; }
+.quiz-why.no { background: #fff7ed; color: #9a3412; }
+html.dark .quiz-why.ok { background: #064e3b; color: #d1fae5; }
+html.dark .quiz-why.no { background: #3b210a; color: #fed7aa; }
+.quiz-result { text-align: center; padding: 12px 4px 4px; }
+.quiz-result .qr-emoji { font-size: 56px; }
+.quiz-result h3 { font-size: 30px; margin: 6px 0; font-variant-numeric: tabular-nums; }
+
 /* Toast */
 .toast {
   position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);

@@ -55,7 +55,8 @@ const CONFIG = {
     valuation: true,      // inventory valuation
     favourites: true,     // quick-sell favourites grid
     accessControl: true,  // admin remote revoke / kill switch
-    licensing: true       // trial + paid subscription gate (inert until configured above)
+    licensing: true,      // trial + paid subscription gate (inert until configured above)
+    training: false       // staff training quiz — OFF by default; enable in More → Features
   }
 };
 
