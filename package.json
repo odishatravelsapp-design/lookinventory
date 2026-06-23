@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Offline-first inventory + billing PWA for small rural shops",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "npx http-server -p 8080 -c-1 .",
     "build": "node tools/build.js",
